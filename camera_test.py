@@ -3,18 +3,18 @@ import cv2
 from ultralytics import YOLO
 
 # Settings
-video_file = "/Users/chasecarson/Desktop/yolo_crabs/YOLOCrabAI/TestVideos/IMG_1173.MOV"  # Local video file
+# video_file = "./TestVideos/IMG_1173.MOV"  # Local video file
 #stream_url = "" 
-#camera_id = 0  # Camera index (0 = default webcam, 1, 2, etc. for other cameras)
+camera_id = 0  # Camera index (0 = default webcam, 1, 2, etc. for other cameras)
 
-source = video_file  # Change to camera_id for camera, stream_url for stream
+source = camera_id  # Change to camera_id for camera, stream_url for stream
 
 conf_threshold = 0.8
 iou_threshold = 0.3 # NMS IoU threshold (lower = more aggressive suppression)
 egc_class_id = 1
 
 # Load model
-model = YOLO("/Users/ChaseCarson/Desktop/yolo_crabs/YOLOCrabAI/Crabs.v3i.yolov11/runs/detect/train2/weights/best.pt")
+model = YOLO("./Crabs.v3i.yolov11/runs/detect/train2/weights/best.pt")
 
 print("Model loaded! Press 'q' to quit.")
 
