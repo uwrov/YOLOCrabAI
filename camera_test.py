@@ -1,18 +1,20 @@
+from typing import Any
 import cv2
 from ultralytics import YOLO
 
 # Settings
-video_file = "/Users/chasecarson/Desktop/yolo_crabs/crabTestVid.mp4"  # Local video file
+video_file = "/Users/chasecarson/Desktop/yolo_crabs/YOLOCrabAI/TestVideos/IMG_1173.MOV"  # Local video file
 #stream_url = "" 
+#camera_id = 0  # Camera index (0 = default webcam, 1, 2, etc. for other cameras)
 
-source = video_file  # Change to video_file if using local file
+source = video_file  # Change to camera_id for camera, stream_url for stream
 
-conf_threshold = 0.5
-iou_threshold = 0.3  # NMS IoU threshold (lower = more aggressive suppression)
+conf_threshold = 0.8
+iou_threshold = 0.3 # NMS IoU threshold (lower = more aggressive suppression)
 egc_class_id = 1
 
 # Load model
-model = YOLO("/Users/ChaseCarson/Desktop/yolo_crabs/Crabs.v3i.yolov11/runs/detect/train/weights/best.pt")
+model = YOLO("/Users/ChaseCarson/Desktop/yolo_crabs/YOLOCrabAI/Crabs.v3i.yolov11/runs/detect/train2/weights/best.pt")
 
 print("Model loaded! Press 'q' to quit.")
 
@@ -21,7 +23,7 @@ total_crabs = 0
 seen_ids = set()  # All track IDs we've ever seen in this video
 
 # Main loop with tracking
-for result in model.track(source=video_file, stream=True, tracker="bytetrack.yaml", persist=True, verbose=False, iou=iou_threshold):
+for result in model.track(source=source, stream=True, tracker="bytetrack.yaml", persist=True, verbose=False, iou=iou_threshold):
     frame = result.orig_img
     boxes = result.boxes
     current_ids = set()
