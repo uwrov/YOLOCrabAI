@@ -3,30 +3,26 @@ import cv2
 from ultralytics import YOLO
 
 # Settings
-# video_file = "./TestVideos/IMG_1173.MOV"  # Local video file
+#video_file = "/Users/chasecarson/Desktop/UWROV/CrabStuff/TestVideos/poolCrab1.mp4"  # Local video file
 #stream_url = "" 
 camera_id = 0  # Camera index (0 = default webcam, 1, 2, etc. for other cameras)
 
 source = camera_id  # Change to camera_id for camera, stream_url for stream
 
-conf_threshold = 0.8
-iou_threshold = 0.3 # NMS IoU threshold (lower = more aggressive suppression)
-egc_class_id = 1
+conf_threshold = 0.9
+iou_threshold = 0.25 # NMS IoU threshold (lower = more aggressive suppression)
+egc_class_id = 0
 
 # Load model
-model = YOLO("./Crabs.v3i.yolov11/runs/detect/train2/weights/best.pt")
+model = YOLO("./best.pt")
 
 print("Model loaded! Press 'q' to quit.")
-
-# Counting variables
-total_crabs = 0
-seen_ids = set()  # All track IDs we've ever seen in this video
 
 # Main loop with tracking
 for result in model.track(source=source, stream=True, tracker="bytetrack.yaml", persist=True, verbose=False, iou=iou_threshold):
     frame = result.orig_img
     boxes = result.boxes
-    current_ids = set()
+    current_crab_count = 0
 
     for box in boxes:
         cls = int(box.cls[0])
@@ -34,8 +30,7 @@ for result in model.track(source=source, stream=True, tracker="bytetrack.yaml", 
         track_id = int(box.id[0]) if box.id is not None else None
 
         if cls == egc_class_id and conf >= conf_threshold:
-            if track_id is not None:
-                current_ids.add(track_id)
+            current_crab_count += 1
 
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -45,13 +40,38 @@ for result in model.track(source=source, stream=True, tracker="bytetrack.yaml", 
             cv2.rectangle(frame, (x1, y1 - label_size[1] - 10), (x1 + label_size[0], y1), (0, 255, 0), -1)
             cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
-    # Update counter - count each unique track ID only once
-    for track_id in current_ids:
-        if track_id not in seen_ids:
-            seen_ids.add(track_id)
-            total_crabs += 1
-
-    cv2.putText(frame, f"Total crabs: {total_crabs}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    # Crab count: top-left, bold readable font (TRIPLEX + thick stroke)
+    crab_text = f"Crabs detected: {current_crab_count}"
+    crab_font = cv2.FONT_HERSHEY_TRIPLEX
+    crab_scale = 1.35
+    crab_thickness = 3
+    crab_margin_x, crab_margin_y = 16, 48
+    crab_x = crab_margin_x
+    crab_y = crab_margin_y
+    # Dark outline for contrast on any background
+    outline_color = (0, 0, 0)
+    fill_color = (0, 255, 0)
+    for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (1, -1), (-1, 1), (1, 1)):
+        cv2.putText(
+            frame,
+            crab_text,
+            (crab_x + dx, crab_y + dy),
+            crab_font,
+            crab_scale,
+            outline_color,
+            crab_thickness + 2,
+            cv2.LINE_AA,
+        )
+    cv2.putText(
+        frame,
+        crab_text,
+        (crab_x, crab_y),
+        crab_font,
+        crab_scale,
+        fill_color,
+        crab_thickness,
+        cv2.LINE_AA,
+    )
     cv2.imshow("ROV EGC Detector", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
